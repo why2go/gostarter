@@ -3,6 +3,7 @@ package zapLogger
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -31,7 +32,7 @@ func getDefaultLoggerConfig() *LoggerConfig {
 		IgnoreErrRecordNotFound: &ignored,
 		SlowThresholdMS:         200,
 		DisableCaller:           false,
-		Encoding:                "console",
+		Encoding:                "json",
 		TimeFormat:              "rfc3339utc",
 	}
 }
@@ -47,6 +48,7 @@ func NewZapLogger(cfg *LoggerConfig) *zapLogger {
 	if cfg == nil {
 		cfg = getDefaultLoggerConfig()
 	}
+	fmt.Printf("%+v\n", cfg)
 	zapConfig := zap.NewProductionConfig()
 	zapConfig.DisableCaller = cfg.DisableCaller
 	// encoding
@@ -174,12 +176,25 @@ func (l zapLogger) Trace(ctx context.Context, begin time.Time, fc func() (string
 	switch {
 	case err != nil && l.LogLevel >= logger.Error && (!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
 		sql, rows := fc()
-		l.zlogger.Error("trace", zap.Error(err), zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql))
+		l.zlogger.Errorw("trace",
+			zap.Error(err),
+			zap.Duration("elapsed", elapsed),
+			zap.Int64("rows", rows),
+			zap.String("sql", sql),
+		)
 	case l.SlowThreshold != 0 && elapsed > l.SlowThreshold && l.LogLevel >= logger.Warn:
 		sql, rows := fc()
-		l.zlogger.Warn("trace", zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql))
-	case l.LogLevel >= logger.Info:
+		l.zlogger.Warnw("trace",
+			zap.Duration("elapsed", elapsed),
+			zap.Int64("rows", rows),
+			zap.String("sql", sql),
+		)
+	case l.LogLevel == logger.Info:
 		sql, rows := fc()
-		l.zlogger.Debug("trace", zap.Duration("elapsed", elapsed), zap.Int64("rows", rows), zap.String("sql", sql))
+		l.zlogger.Infow("trace",
+			zap.Duration("elapsed", elapsed),
+			zap.Int64("rows", rows),
+			zap.String("sql", sql),
+		)
 	}
 }
