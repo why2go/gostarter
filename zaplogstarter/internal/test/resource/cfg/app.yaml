@@ -1,0 +1,5 @@
+zaplog:
+  level: info
+  timeFormat: json
+  durationUnit: millis
+  disableCaller: true
