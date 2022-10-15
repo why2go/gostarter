@@ -23,7 +23,7 @@ func init() {
 	cfg := &gormConfig{}
 	err := config.GetConfig(cfg)
 	if err != nil {
-		zerologger.Fatal().Msg("load gorm config failed")
+		zerologger.Fatal().Err(err).Msg("load gorm config failed")
 		return
 	}
 	Client = newGormDB(cfg)
