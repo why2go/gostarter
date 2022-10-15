@@ -3,7 +3,6 @@ package zapLogger
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -23,6 +22,7 @@ type LoggerConfig struct {
 	Encoding      string   `json:"encoding" yaml:"encoding"`
 	OutputPaths   []string `json:"outputPaths" yaml:"outputPaths"`
 	TimeFormat    string   `yaml:"timeFormat" json:"timeFormat"`
+	DurationUnit  string   `yaml:"durationUnit" json:"durationUnit"`
 }
 
 func getDefaultLoggerConfig() *LoggerConfig {
@@ -48,7 +48,7 @@ func NewZapLogger(cfg *LoggerConfig) *zapLogger {
 	if cfg == nil {
 		cfg = getDefaultLoggerConfig()
 	}
-	fmt.Printf("%+v\n", cfg)
+
 	zapConfig := zap.NewProductionConfig()
 	zapConfig.DisableCaller = cfg.DisableCaller
 	// encoding
@@ -63,28 +63,41 @@ func NewZapLogger(cfg *LoggerConfig) *zapLogger {
 	if len(cfg.OutputPaths) != 0 {
 		zapConfig.OutputPaths = cfg.OutputPaths
 	}
-	if len(cfg.TimeFormat) != 0 {
-		switch strings.ToLower(cfg.TimeFormat) {
-		case "rfc3339":
-			zapConfig.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
-		case "rfc3339utc":
-			zapConfig.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
-		case "rfc3339nano":
-			zapConfig.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
-		case "rfc3339nanoutc":
-			zapConfig.EncoderConfig.EncodeTime = RFC3339NanoUTCTimeEncoder
-		case "epoch":
-			zapConfig.EncoderConfig.EncodeTime = zapcore.EpochTimeEncoder
-		case "epochmillis":
-			zapConfig.EncoderConfig.EncodeTime = zapcore.EpochMillisTimeEncoder
-		case "epochnanos":
-			zapConfig.EncoderConfig.EncodeTime = zapcore.EpochNanosTimeEncoder
-		case "iso8601":
-			zapConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-		default:
-			zapConfig.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
-		}
+
+	switch strings.ToLower(cfg.TimeFormat) {
+	case "rfc3339":
+		zapConfig.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	case "rfc3339utc":
+		zapConfig.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
+	case "rfc3339nano":
+		zapConfig.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
+	case "rfc3339nanoutc":
+		zapConfig.EncoderConfig.EncodeTime = RFC3339NanoUTCTimeEncoder
+	case "epoch":
+		zapConfig.EncoderConfig.EncodeTime = zapcore.EpochTimeEncoder
+	case "epochmillis":
+		zapConfig.EncoderConfig.EncodeTime = zapcore.EpochMillisTimeEncoder
+	case "epochnanos":
+		zapConfig.EncoderConfig.EncodeTime = zapcore.EpochNanosTimeEncoder
+	case "iso8601":
+		zapConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	default:
+		zapConfig.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
 	}
+
+	switch strings.ToLower(cfg.DurationUnit) {
+	case "nanos":
+		zapConfig.EncoderConfig.EncodeDuration = zapcore.NanosDurationEncoder
+	case "millis":
+		zapConfig.EncoderConfig.EncodeDuration = MillisDurationEncoder
+	case "seconds":
+		zapConfig.EncoderConfig.EncodeDuration = zapcore.SecondsDurationEncoder
+	case "string":
+		zapConfig.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
+	default:
+		zapConfig.EncoderConfig.EncodeDuration = MillisDurationEncoder
+	}
+
 	l, err := zapConfig.Build()
 	if err != nil {
 		log.Fatal("gorm starter init zap log failed", err)
@@ -139,6 +152,10 @@ func RFC3339NanoUTCTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.UTC().Format(time.RFC3339Nano))
 }
 
+func MillisDurationEncoder(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendFloat64(float64(d) / float64(time.Millisecond))
+}
+
 // LogMode log mode
 func (l *zapLogger) LogMode(level logger.LogLevel) logger.Interface {
 	newlogger := *l
@@ -176,7 +193,7 @@ func (l zapLogger) Trace(ctx context.Context, begin time.Time, fc func() (string
 	switch {
 	case err != nil && l.LogLevel >= logger.Error && (!l.IgnoreRecordNotFoundError || !errors.Is(err, gorm.ErrRecordNotFound)):
 		sql, rows := fc()
-		l.zlogger.Errorw("trace",
+		l.zlogger.Errorw("gormTrace",
 			zap.Error(err),
 			zap.Duration("elapsed", elapsed),
 			zap.Int64("rows", rows),
@@ -184,14 +201,14 @@ func (l zapLogger) Trace(ctx context.Context, begin time.Time, fc func() (string
 		)
 	case l.SlowThreshold != 0 && elapsed > l.SlowThreshold && l.LogLevel >= logger.Warn:
 		sql, rows := fc()
-		l.zlogger.Warnw("trace",
+		l.zlogger.Warnw("gormTrace",
 			zap.Duration("elapsed", elapsed),
 			zap.Int64("rows", rows),
 			zap.String("sql", sql),
 		)
 	case l.LogLevel == logger.Info:
 		sql, rows := fc()
-		l.zlogger.Infow("trace",
+		l.zlogger.Infow("gormTrace",
 			zap.Duration("elapsed", elapsed),
 			zap.Int64("rows", rows),
 			zap.String("sql", sql),

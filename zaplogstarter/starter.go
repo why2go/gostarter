@@ -74,42 +74,38 @@ func (cfg *zapConfig) buildZapProductionConfig() *zap.Config {
 		pcfg.Encoding = "json"
 	}
 
-	if len(cfg.TimeFormat) != 0 {
-		switch strings.ToLower(cfg.TimeFormat) {
-		case "rfc3339":
-			pcfg.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
-		case "rfc3339utc":
-			pcfg.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
-		case "rfc3339nano":
-			pcfg.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
-		case "rfc3339nanoutc":
-			pcfg.EncoderConfig.EncodeTime = RFC3339NanoUTCTimeEncoder
-		case "epoch":
-			pcfg.EncoderConfig.EncodeTime = zapcore.EpochTimeEncoder
-		case "epochmillis":
-			pcfg.EncoderConfig.EncodeTime = zapcore.EpochMillisTimeEncoder
-		case "epochnanos":
-			pcfg.EncoderConfig.EncodeTime = zapcore.EpochNanosTimeEncoder
-		case "iso8601":
-			pcfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
-		default:
-			pcfg.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
-		}
+	switch strings.ToLower(cfg.TimeFormat) {
+	case "rfc3339":
+		pcfg.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
+	case "rfc3339utc":
+		pcfg.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
+	case "rfc3339nano":
+		pcfg.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
+	case "rfc3339nanoutc":
+		pcfg.EncoderConfig.EncodeTime = RFC3339NanoUTCTimeEncoder
+	case "epoch":
+		pcfg.EncoderConfig.EncodeTime = zapcore.EpochTimeEncoder
+	case "epochmillis":
+		pcfg.EncoderConfig.EncodeTime = zapcore.EpochMillisTimeEncoder
+	case "epochnanos":
+		pcfg.EncoderConfig.EncodeTime = zapcore.EpochNanosTimeEncoder
+	case "iso8601":
+		pcfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	default:
+		pcfg.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
 	}
 
-	if len(cfg.DurationUnit) != 0 {
-		switch strings.ToLower(cfg.DurationUnit) {
-		case "nanos":
-			pcfg.EncoderConfig.EncodeDuration = zapcore.NanosDurationEncoder
-		case "millis":
-			pcfg.EncoderConfig.EncodeDuration = MillisDurationEncoder
-		case "seconds":
-			pcfg.EncoderConfig.EncodeDuration = zapcore.SecondsDurationEncoder
-		case "string":
-			pcfg.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
-		default:
-			pcfg.EncoderConfig.EncodeDuration = MillisDurationEncoder
-		}
+	switch strings.ToLower(cfg.DurationUnit) {
+	case "nanos":
+		pcfg.EncoderConfig.EncodeDuration = zapcore.NanosDurationEncoder
+	case "millis":
+		pcfg.EncoderConfig.EncodeDuration = MillisDurationEncoder
+	case "seconds":
+		pcfg.EncoderConfig.EncodeDuration = zapcore.SecondsDurationEncoder
+	case "string":
+		pcfg.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
+	default:
+		pcfg.EncoderConfig.EncodeDuration = MillisDurationEncoder
 	}
 
 	var callerEncoder zapcore.CallerEncoder
