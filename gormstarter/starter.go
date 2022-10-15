@@ -1,22 +1,18 @@
 package gormstarter
 
 import (
-	golog "log"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/why2go/gostarter/config"
+	mylogger "github.com/why2go/gostarter/gormstarter/logger"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/driver/sqlserver"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 )
-
-// todo: 替换gorm的日志记录
 
 var (
 	Client     *gorm.DB
@@ -34,15 +30,13 @@ func init() {
 }
 
 type gormConfig struct {
-	DBType                string `yaml:"dbType"`
-	DSN                   string `yaml:"dsn"`
-	LogMode               string `yaml:"logMode"`
-	SkipErrRecordNotFound bool   `yaml:"skipErrRecordNotFound"`
-	ConnMaxIdleTime       string `yaml:"connMaxIdleTime"`
-	ConnMaxLifetime       string `yaml:"connMaxLifetime"`
-	MaxIdleConns          *int   `yaml:"maxIdleConns"`
-	MaxOpenConns          *int   `yaml:"maxOpenConns"`
-	SlowThreshold         string `yaml:"slowThreshold"`
+	DBType          string                 `yaml:"dbType" json:"dbType"`
+	DSN             string                 `yaml:"dsn" json:"dsn"`
+	ConnMaxIdleTime string                 `yaml:"connMaxIdleTime" json:"connMaxIdleTime"`
+	ConnMaxLifetime string                 `yaml:"connMaxLifetime" json:"connMaxLifetime"`
+	MaxIdleConns    *int                   `yaml:"maxIdleConns" json:"maxIdleConns"`
+	MaxOpenConns    *int                   `yaml:"maxOpenConns" json:"maxOpenConns"`
+	Logger          *mylogger.LoggerConfig `yaml:"logger" json:"logger"`
 }
 
 func (cfg *gormConfig) GetConfigName() string {
@@ -65,20 +59,6 @@ func newGormDB(cfg *gormConfig) *gorm.DB {
 		cfg.DBType = dbTypeMysql
 	}
 	zerologger.Info().Msgf("trying to connect to %s server...", cfg.DBType)
-	// 设置logMode
-	var logMode logger.LogLevel
-	switch strings.ToLower(cfg.LogMode) {
-	case "silent":
-		logMode = logger.Silent
-	case "error":
-		logMode = logger.Error
-	case "warn":
-		logMode = logger.Warn
-	case "info":
-		logMode = logger.Info
-	default:
-		logMode = logger.Silent
-	}
 	// 设置数据库类型
 	var dialector gorm.Dialector
 	switch strings.ToLower(cfg.DBType) {
@@ -94,24 +74,7 @@ func newGormDB(cfg *gormConfig) *gorm.DB {
 		zerologger.Fatal().Msgf("unsupport db type: %s", cfg.DBType)
 		return nil
 	}
-	// 慢查询日志预支
-	SlowThreshold := 500 * time.Millisecond
-	if len(cfg.SlowThreshold) != 0 {
-		d, err := time.ParseDuration(cfg.SlowThreshold)
-		if err != nil {
-			zerologger.Fatal().Err(err).Msgf("invalid duration expression: %s", cfg.SlowThreshold)
-			return nil
-		}
-		SlowThreshold = d
-	}
-	db, err := gorm.Open(dialector, &gorm.Config{
-		Logger: logger.New(golog.New(os.Stdout, "\r\n", golog.LstdFlags), logger.Config{
-			SlowThreshold:             SlowThreshold,
-			LogLevel:                  logMode,
-			IgnoreRecordNotFoundError: cfg.SkipErrRecordNotFound,
-			Colorful:                  false,
-		}),
-	})
+	db, err := gorm.Open(dialector, &gorm.Config{Logger: mylogger.NewZapLogger(cfg.Logger)})
 	if err != nil {
 		zerologger.Fatal().Err(err).Msgf("can't connect to %s server", cfg.DBType)
 		return nil
