@@ -39,10 +39,6 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 		raw := c.Request.URL.RawQuery
 		requestId := genRequestId()
 
-		if len(raw) != 0 {
-			path = path + "?" + raw
-		}
-
 		_, skipped := skip[path]
 
 		c.Request = c.Request.WithContext(
