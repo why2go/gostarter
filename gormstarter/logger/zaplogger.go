@@ -16,7 +16,7 @@ import (
 type LoggerConfig struct {
 	LogMode                 string `yaml:"logMode" json:"logMode"`
 	IgnoreErrRecordNotFound *bool  `yaml:"ignoreErrRecordNotFound" json:"ignoreErrRecordNotFound"`
-	SlowThresholdMS         int    `yaml:"slowThreshold" json:"slowThreshold"`
+	SlowThresholdMS         int    `yaml:"slowThresholdMS" json:"slowThresholdMS"`
 	// zap log config
 	DisableCaller bool     `json:"disableCaller" yaml:"disableCaller"`
 	Encoding      string   `json:"encoding" yaml:"encoding"`
