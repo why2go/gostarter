@@ -18,11 +18,10 @@ type LoggerConfig struct {
 	IgnoreErrRecordNotFound *bool  `yaml:"ignoreErrRecordNotFound" json:"ignoreErrRecordNotFound"`
 	SlowThresholdMS         int    `yaml:"slowThresholdMS" json:"slowThresholdMS"`
 	// zap log config
-	DisableCaller bool     `json:"disableCaller" yaml:"disableCaller"`
-	Encoding      string   `json:"encoding" yaml:"encoding"`
-	OutputPaths   []string `json:"outputPaths" yaml:"outputPaths"`
-	TimeFormat    string   `yaml:"timeFormat" json:"timeFormat"`
-	DurationUnit  string   `yaml:"durationUnit" json:"durationUnit"`
+	Encoding     string   `json:"encoding" yaml:"encoding"`
+	OutputPaths  []string `json:"outputPaths" yaml:"outputPaths"`
+	TimeFormat   string   `yaml:"timeFormat" json:"timeFormat"`
+	DurationUnit string   `yaml:"durationUnit" json:"durationUnit"`
 }
 
 func getDefaultLoggerConfig() *LoggerConfig {
@@ -31,7 +30,6 @@ func getDefaultLoggerConfig() *LoggerConfig {
 		LogMode:                 "info",
 		IgnoreErrRecordNotFound: &ignored,
 		SlowThresholdMS:         200,
-		DisableCaller:           false,
 		Encoding:                "json",
 		TimeFormat:              "rfc3339utc",
 	}
@@ -50,7 +48,7 @@ func NewZapLogger(cfg *LoggerConfig) *zapLogger {
 	}
 
 	zapConfig := zap.NewProductionConfig()
-	zapConfig.DisableCaller = cfg.DisableCaller
+	zapConfig.DisableCaller = true
 	// encoding
 	switch cfg.Encoding {
 	case "json":
