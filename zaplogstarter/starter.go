@@ -10,16 +10,27 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var ZapConfig *zap.Config
+var (
+	ZapConfig      *zap.Config
+	Logger         *zap.Logger
+	SurgaredLogger *zap.SugaredLogger
+)
 
 func init() {
 	cfg := &zapConfig{}
 	err := config.GetConfig(cfg)
 	if err != nil && err != config.ErrCfgItemNotFound {
-		log.Fatal("load zaplog config failed")
+		log.Fatal("load zaplog config failed", err)
 		return
 	}
 	ZapConfig = cfg.buildZapProductionConfig()
+	l, err := ZapConfig.Build()
+	if err != nil {
+		log.Fatal("init zap logger failed", err)
+		return
+	}
+	Logger = l
+	SurgaredLogger = l.Sugar()
 }
 
 type zapConfig struct {
@@ -78,11 +89,11 @@ func (cfg *zapConfig) buildZapProductionConfig() *zap.Config {
 	case "rfc3339":
 		pcfg.EncoderConfig.EncodeTime = zapcore.RFC3339TimeEncoder
 	case "rfc3339utc":
-		pcfg.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
+		pcfg.EncoderConfig.EncodeTime = _RFC3339UTCTimeEncoder
 	case "rfc3339nano":
 		pcfg.EncoderConfig.EncodeTime = zapcore.RFC3339NanoTimeEncoder
 	case "rfc3339nanoutc":
-		pcfg.EncoderConfig.EncodeTime = RFC3339NanoUTCTimeEncoder
+		pcfg.EncoderConfig.EncodeTime = _RFC3339NanoUTCTimeEncoder
 	case "epoch":
 		pcfg.EncoderConfig.EncodeTime = zapcore.EpochTimeEncoder
 	case "epochmillis":
@@ -92,20 +103,20 @@ func (cfg *zapConfig) buildZapProductionConfig() *zap.Config {
 	case "iso8601":
 		pcfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	default:
-		pcfg.EncoderConfig.EncodeTime = RFC3339UTCTimeEncoder
+		pcfg.EncoderConfig.EncodeTime = _RFC3339UTCTimeEncoder
 	}
 
 	switch strings.ToLower(cfg.DurationUnit) {
 	case "nanos":
 		pcfg.EncoderConfig.EncodeDuration = zapcore.NanosDurationEncoder
 	case "millis":
-		pcfg.EncoderConfig.EncodeDuration = MillisDurationEncoder
+		pcfg.EncoderConfig.EncodeDuration = _MillisDurationEncoder
 	case "seconds":
 		pcfg.EncoderConfig.EncodeDuration = zapcore.SecondsDurationEncoder
 	case "string":
 		pcfg.EncoderConfig.EncodeDuration = zapcore.StringDurationEncoder
 	default:
-		pcfg.EncoderConfig.EncodeDuration = MillisDurationEncoder
+		pcfg.EncoderConfig.EncodeDuration = _MillisDurationEncoder
 	}
 
 	var callerEncoder zapcore.CallerEncoder
@@ -122,14 +133,14 @@ func (cfg *zapConfig) buildZapProductionConfig() *zap.Config {
 	return &pcfg
 }
 
-func RFC3339UTCTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+func _RFC3339UTCTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.UTC().Format(time.RFC3339))
 }
 
-func RFC3339NanoUTCTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+func _RFC3339NanoUTCTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.UTC().Format(time.RFC3339Nano))
 }
 
-func MillisDurationEncoder(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
+func _MillisDurationEncoder(d time.Duration, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendFloat64(float64(d) / float64(time.Millisecond))
 }
