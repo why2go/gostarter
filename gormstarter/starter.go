@@ -74,7 +74,7 @@ func newGormDB(cfg *gormConfig) *gorm.DB {
 		zerologger.Fatal().Msgf("unsupport db type: %s", cfg.DBType)
 		return nil
 	}
-	db, err := gorm.Open(dialector, &gorm.Config{Logger: mylogger.NewZapLogger(cfg.Logger)})
+	db, err := gorm.Open(dialector, &gorm.Config{Logger: mylogger.NewZeroLogger(cfg.Logger)})
 	if err != nil {
 		zerologger.Fatal().Err(err).Msgf("can't connect to %s server", cfg.DBType)
 		return nil

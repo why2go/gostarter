@@ -2,8 +2,6 @@ package boot
 
 import (
 	"context"
-	"log"
-	"time"
 
 	"fmt"
 	"os/signal"
@@ -12,8 +10,8 @@ import (
 
 	config "github.com/why2go/gostarter/config"
 	_ "github.com/why2go/gostarter/zerologstarter"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+
+	"github.com/rs/zerolog/log"
 )
 
 // 规定应用的启动过程，包括配置加载，执行启动函数，执行清理函数
@@ -25,47 +23,24 @@ const (
 )
 
 var (
-	logger      *zap.SugaredLogger
+	logger      = log.With().Str("ltag", "boot").Logger()
 	appInstance *app
 )
 
 func init() {
-	var err error
-	sl, err := newZapLogger()
-	if err != nil {
-		log.Fatalf("err: %s, msg: %s", err, "new zap logger failed")
-		return
-	}
-	logger = sl
 	cfg := &appConf{}
-	err = config.GetConfig(cfg)
+	err := config.GetConfig(cfg)
 	if err != nil {
 		if err == config.ErrCfgItemNotFound {
 			cfg.AppName = defaultAppName
 			cfg.Version = defaultVersion
 			cfg.Description = defaultDescription
 		} else {
-			logger.Fatalw("", zap.String("msg", "load app config failed"))
+			logger.Fatal().Err(err).Msg("load app config failed")
 			return
 		}
 	}
-
 	appInstance = newApp(cfg)
-}
-
-func newZapLogger() (*zap.SugaredLogger, error) {
-	pc := zap.NewProductionConfig()
-	pc.EncoderConfig.MessageKey = zapcore.OmitKey
-	pc.EncoderConfig.EncodeTime = _RFC3339NanoUTCTimeEncoder
-	l, err := pc.Build()
-	if err != nil {
-		return nil, err
-	}
-	return l.Sugar().Named("boot"), nil
-}
-
-func _RFC3339NanoUTCTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.UTC().Format(time.RFC3339Nano))
 }
 
 type appConf struct {
@@ -109,7 +84,7 @@ func AddStarters(starters ...interface{}) {
 		case func() error:
 		default:
 			err := fmt.Errorf("invalid starter: %s", reflect.TypeOf(f))
-			logger.Fatalw("", zap.Error(err))
+			logger.Fatal().Err(err).Send()
 		}
 	}
 	appInstance.starters = append(appInstance.starters, starters...)
@@ -122,7 +97,7 @@ func AddSweepers(sweepers ...interface{}) {
 		case func() error:
 		default:
 			err := fmt.Errorf("invalid sweeper: %s", reflect.TypeOf(f))
-			logger.Fatalw("", zap.Error(err))
+			logger.Fatal().Err(err).Send()
 		}
 	}
 	appInstance.sweepers = append(appInstance.sweepers, sweepers...)
@@ -154,7 +129,7 @@ func GetAppChangeLog() string {
 }
 
 func startup() {
-	logger.Infow("", zap.String("msg", fmt.Sprintf("[%s] is starting", GetAppName())))
+	logger.Info().Msgf("[%s] is starting", GetAppName())
 
 	for _, f := range appInstance.starters {
 		switch v := f.(type) {
@@ -163,15 +138,15 @@ func startup() {
 		case func() error:
 			err := v()
 			if err != nil {
-				logger.Fatalw("", zap.Error(err))
+				logger.Fatal().Err(err).Send()
 			}
 		default:
 			err := fmt.Errorf("invalid starter: %s", reflect.TypeOf(f))
-			logger.Fatalw("", zap.Error(err))
+			logger.Fatal().Err(err).Send()
 		}
 	}
 
-	logger.Infow("", zap.String("msg", fmt.Sprintf("successfully start [%s]!", GetAppName())))
+	logger.Info().Msgf("successfully start [%s]!", GetAppName())
 }
 
 func shutdown() {
@@ -180,7 +155,7 @@ func shutdown() {
 	<-ctx.Done()
 	stop()
 
-	logger.Infow("", zap.String("msg", fmt.Sprintf("[%s] is sweeping", GetAppName())))
+	logger.Info().Msgf("[%s] is sweeping", GetAppName())
 
 	for _, f := range appInstance.sweepers {
 		switch v := f.(type) {
@@ -188,13 +163,13 @@ func shutdown() {
 			v()
 		case func() error:
 			err := v()
-			logger.Error("", zap.Error(err), zap.String("msg", "app sweep error")) // don't panic, go on sweeping
+			logger.Error().Err(err).Msg("app sweep error") // don't panic, go on sweeping
 		default:
 			err := fmt.Errorf("invalid sweeper: %s", reflect.TypeOf(f))
-			logger.Fatalw("", zap.Error(err))
+			logger.Fatal().Err(err).Send()
 		}
 	}
 
 	fmt.Printf("\n===== press Ctrl+C again to force quit =====\n\n")
-	logger.Infow("", zap.String("msg", fmt.Sprintf("successfully stop [%s]!", GetAppName())))
+	logger.Info().Msgf("successfully stop [%s]!", GetAppName())
 }
