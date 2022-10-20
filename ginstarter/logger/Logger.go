@@ -59,7 +59,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 				Str("path", path).
 				Str("requestId", requestId).
 				Int("statusCode", c.Writer.Status()).
-				TimeDiff("latencyMS", time.Now(), start).
+				TimeDiff("latency", time.Now(), start).
 				Int("bodySize", c.Writer.Size())
 			if len(c.Errors.ByType(gin.ErrorTypePrivate).String()) != 0 {
 				e = e.Str("errMsg", c.Errors.ByType(gin.ErrorTypePrivate).String())

@@ -1,6 +1,7 @@
 package zerologstarter
 
 import (
+	"strings"
 	"time"
 
 	config "github.com/why2go/gostarter/config"
@@ -30,6 +31,15 @@ func init() {
 	zerolog.SetGlobalLevel(level)
 	zerolog.TimeFieldFormat = time.RFC3339Nano
 
+	switch strings.ToLower(cfg.DurationFieldUnit) {
+	case "millis", "ms", "millisecond":
+		zerolog.DurationFieldUnit = time.Millisecond
+	case "nanos", "ns", "nanosecond":
+		zerolog.DurationFieldUnit = time.Nanosecond
+	case "micros", "us", "microsecond":
+		zerolog.DurationFieldUnit = time.Microsecond
+	}
+
 	if cfg.EnableRotation {
 		if cfg.Logger == nil {
 			log.Fatal().Msgf("init zerolog failed, rotation config can't be nil")
@@ -48,6 +58,7 @@ func init() {
 
 type zerologConf struct {
 	GlobalLevel        string `yaml:"globalLevel" json:"globalLevel"`
+	DurationFieldUnit  string `yaml:"durationFieldUnit" json:"durationFieldUnit"`
 	EnableRotation     bool   `yaml:"enableRotation" json:"enableRotation"`
 	*lumberjack.Logger `yaml:"rotationConfig" json:"rotationConfig"`
 }
