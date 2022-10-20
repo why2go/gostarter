@@ -30,6 +30,7 @@ func init() {
 	}
 	zerolog.SetGlobalLevel(level)
 	zerolog.TimeFieldFormat = time.RFC3339Nano
+	zerolog.TimestampFunc = time.Now().UTC
 
 	switch strings.ToLower(cfg.DurationFieldUnit) {
 	case "millis", "ms", "millisecond":

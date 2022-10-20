@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/why2go/gostarter/config"
 	mylogger "github.com/why2go/gostarter/gormstarter/logger"
+	_ "github.com/why2go/gostarter/zerologstarter"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
