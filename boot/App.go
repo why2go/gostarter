@@ -11,6 +11,7 @@ import (
 	config "github.com/why2go/gostarter/config"
 	_ "github.com/why2go/gostarter/zerologstarter"
 
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
@@ -23,11 +24,12 @@ const (
 )
 
 var (
-	logger      = log.With().Str("ltag", "boot").Logger()
+	logger      zerolog.Logger
 	appInstance *app
 )
 
 func init() {
+	logger = log.With().Str("ltag", "boot").Logger()
 	cfg := &appConf{}
 	err := config.GetConfig(cfg)
 	if err != nil {
