@@ -47,14 +47,14 @@ type ginConf struct {
 	Host   string      `yaml:"host" json:"host"`
 	Port   uint16      `yaml:"port" json:"port"`
 	Mode   string      `yaml:"mode" json:"mode"`
-	Cors   *corsConf   `yaml:"cors"`
-	Logger *loggerConf `yaml:"logger"`
+	Cors   *corsConf   `yaml:"cors" json:"cors"`
+	Logger *loggerConf `yaml:"logger" json:"logger"`
 }
 
 type corsConf struct {
-	Origins []string `yaml:"origins"`
-	Methods []string `yaml:"methods"`
-	Headers []string `yaml:"headers"`
+	Origins []string `yaml:"origins" json:"origins"`
+	Methods []string `yaml:"methods" json:"methods"`
+	Headers []string `yaml:"headers" json:"headers"`
 }
 
 type loggerConf struct {

@@ -61,7 +61,7 @@ func newMongoClient(cfg *mongoConf) *mongoClient {
 
 // 配置项
 type mongoConf struct {
-	ConnectionString string `yaml:"connectionString"`
+	ConnectionString string `yaml:"connectionString" json:"connectionString"`
 }
 
 func (cfg *mongoConf) GetConfigName() string {
