@@ -47,8 +47,9 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 		// Process request
 		c.Next()
+		c.Writer.Header().Set("x-request-id", requestId) // 将requestId设置到响应的header里
 
-		// Log only when path is not being skipped
+		// Log only if path is not being skipped
 		if !skipped {
 			if len(raw) != 0 {
 				path = path + "?" + raw

@@ -89,7 +89,7 @@ func (conf *redisConf) GetConfigName() string {
 
 func newRedisClient(cfg *redisConf) *redisClient {
 	if cfg == nil {
-		log.Fatal().Msg("no configuration found for redis")
+		logger.Fatal().Msg("no config found for redis")
 		return nil
 	}
 	log.Info().Msg("connecting to redis server...")
