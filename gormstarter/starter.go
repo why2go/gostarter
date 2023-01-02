@@ -31,8 +31,8 @@ import (
 //       slowThresholdMS: 200
 
 var (
-	dataSrcs map[string]*gorm.DB
-	logger   = log.With().Str("ltag", "gormStarter").Logger()
+	dataSourceMap map[string]*gorm.DB
+	logger        = log.With().Str("ltag", "gormStarter").Logger()
 )
 
 func init() {
@@ -45,10 +45,9 @@ func init() {
 	if len(cfg) == 0 {
 		logger.Fatal().Msg("no data source config found")
 	}
-	dataSrcs = make(map[string]*gorm.DB)
+	dataSourceMap = make(map[string]*gorm.DB)
 	for srcName, srcCfg := range cfg {
-		logger.Info().Str("srcName", srcName).Send()
-		dataSrcs[srcName] = newGormDB(srcName, srcCfg)
+		dataSourceMap[srcName] = newGormDB(srcName, srcCfg)
 	}
 }
 
@@ -58,7 +57,7 @@ var (
 
 // 支持多个数据源配置，使用配置的数据源名字来获取数据源client，参数srcName大小写敏感
 func GetDbBySourceName(srcName string) (*gorm.DB, error) {
-	if src, ok := dataSrcs[srcName]; ok {
+	if src, ok := dataSourceMap[srcName]; ok {
 		return src, nil
 	} else {
 		return nil, ErrSourceNotFound
