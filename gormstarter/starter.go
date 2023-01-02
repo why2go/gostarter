@@ -7,7 +7,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/why2go/gostarter/config"
-	mylogger "github.com/why2go/gostarter/gormstarter/logger"
+	gormLogger "github.com/why2go/gostarter/gormstarter/logger"
 	_ "github.com/why2go/gostarter/zerologstarter"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/postgres"
@@ -31,22 +31,22 @@ import (
 //       slowThresholdMS: 200
 
 var (
-	clients    map[string]*gorm.DB
-	zerologger = log.With().Str("ltag", "gormStarter").Logger()
+	clients map[string]*gorm.DB
+	logger  = log.With().Str("ltag", "gormStarter").Logger()
 )
 
 func init() {
-	cfg := &gormConfig{}
-	err := config.GetConfig(cfg)
+	var cfg gormConfig
+	err := config.GetConfig(&cfg)
 	if err != nil {
-		zerologger.Fatal().Err(err).Msg("load gorm config failed")
+		logger.Fatal().Err(err).Msg("load gorm config failed")
 		return
 	}
-	if len(cfg.Dbs) == 0 {
-		zerologger.Fatal().Msg("no data source config found")
+	if len(cfg) == 0 {
+		logger.Fatal().Msg("no data source config found")
 	}
 	clients = make(map[string]*gorm.DB)
-	for srcName, srcCfg := range cfg.Dbs {
+	for srcName, srcCfg := range cfg {
 		clients[srcName] = newGormDB(srcCfg)
 	}
 }
@@ -64,18 +64,16 @@ func GetDbBySourceName(srcName string) (*gorm.DB, error) {
 	}
 }
 
-type gormConfig struct {
-	Dbs map[string]*dataSourceConfig
-}
+type gormConfig map[string]*dataSourceConfig
 
 type dataSourceConfig struct {
-	DBType          string                 `yaml:"dbType" json:"dbType"`
-	DSN             string                 `yaml:"dsn" json:"dsn"`
-	ConnMaxIdleTime string                 `yaml:"connMaxIdleTime" json:"connMaxIdleTime"`
-	ConnMaxLifetime string                 `yaml:"connMaxLifetime" json:"connMaxLifeTime"`
-	MaxIdleConns    *int                   `yaml:"maxIdleConns" json:"maxIdleConns"`
-	MaxOpenConns    *int                   `yaml:"maxOpenConns" json:"maxOpenConns"`
-	Logger          *mylogger.LoggerConfig `yaml:"logger" json:"logger"`
+	DBType          string                   `yaml:"dbType" json:"dbType"`
+	DSN             string                   `yaml:"dsn" json:"dsn"`
+	ConnMaxIdleTime string                   `yaml:"connMaxIdleTime" json:"connMaxIdleTime"`
+	ConnMaxLifetime string                   `yaml:"connMaxLifeTime" json:"connMaxLifeTime"`
+	MaxIdleConns    *int                     `yaml:"maxIdleConns" json:"maxIdleConns"`
+	MaxOpenConns    *int                     `yaml:"maxOpenConns" json:"maxOpenConns"`
+	Logger          *gormLogger.LoggerConfig `yaml:"logger" json:"logger"`
 }
 
 func (cfg *gormConfig) GetConfigName() string {
@@ -97,7 +95,7 @@ func newGormDB(cfg *dataSourceConfig) *gorm.DB {
 	if len(cfg.DBType) == 0 {
 		cfg.DBType = dbTypeMysql
 	}
-	zerologger.Info().Msgf("trying to connect to %s server...", cfg.DBType)
+	logger.Info().Msgf("trying to connect to %s server...", cfg.DBType)
 	// 设置数据库类型
 	var dialector gorm.Dialector
 	switch strings.ToLower(cfg.DBType) {
@@ -110,17 +108,17 @@ func newGormDB(cfg *dataSourceConfig) *gorm.DB {
 	case dbTypeSqlServer:
 		dialector = sqlserver.Open(cfg.DSN)
 	default:
-		zerologger.Fatal().Msgf("unsupport db type: %s", cfg.DBType)
+		logger.Fatal().Msgf("unsupport db type: %s", cfg.DBType)
 		return nil
 	}
-	db, err := gorm.Open(dialector, &gorm.Config{Logger: mylogger.NewZeroLogger(cfg.Logger)})
+	db, err := gorm.Open(dialector, &gorm.Config{Logger: gormLogger.NewZeroLogger(cfg.Logger)})
 	if err != nil {
-		zerologger.Fatal().Err(err).Msgf("can't connect to %s server", cfg.DBType)
+		logger.Fatal().Err(err).Msgf("can't connect to %s server", cfg.DBType)
 		return nil
 	}
 	sqlDb, err := db.DB()
 	if err != nil {
-		zerologger.Fatal().Err(err).Msgf("can't connect to %s server", cfg.DBType)
+		logger.Fatal().Err(err).Msgf("can't connect to %s server", cfg.DBType)
 		return nil
 	}
 	connMaxIdleTime := 30 * time.Minute // 默认30min
@@ -130,7 +128,7 @@ func newGormDB(cfg *dataSourceConfig) *gorm.DB {
 	if len(cfg.ConnMaxIdleTime) != 0 {
 		d, err := time.ParseDuration(cfg.ConnMaxIdleTime)
 		if err != nil {
-			zerologger.Fatal().Err(err).Msgf("invalid duration expression: %s", cfg.ConnMaxIdleTime)
+			logger.Fatal().Err(err).Msgf("invalid duration expression: %s", cfg.ConnMaxIdleTime)
 			return nil
 		}
 		connMaxIdleTime = d
@@ -138,7 +136,7 @@ func newGormDB(cfg *dataSourceConfig) *gorm.DB {
 	if len(cfg.ConnMaxLifetime) != 0 {
 		d, err := time.ParseDuration(cfg.ConnMaxLifetime)
 		if err != nil {
-			zerologger.Fatal().Err(err).Msgf("invalid duration expression: %s", cfg.ConnMaxLifetime)
+			logger.Fatal().Err(err).Msgf("invalid duration expression: %s", cfg.ConnMaxLifetime)
 			return nil
 		}
 		connMaxLifetime = d
@@ -153,6 +151,6 @@ func newGormDB(cfg *dataSourceConfig) *gorm.DB {
 	sqlDb.SetConnMaxLifetime(connMaxLifetime)
 	sqlDb.SetMaxOpenConns(maxOpenConns)
 	sqlDb.SetMaxIdleConns(maxIdleConns)
-	zerologger.Info().Msgf("successfully connect to %s server!", cfg.DBType)
+	logger.Info().Msgf("successfully connect to %s server!", cfg.DBType)
 	return db
 }
