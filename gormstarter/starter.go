@@ -1,6 +1,7 @@
 package gormstarter
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -15,8 +16,22 @@ import (
 	"gorm.io/gorm"
 )
 
+// 支持多数据源配置，示例如下：
+// gorm:
+//   db0:
+//     dbType: mysql
+//     dsn: root:root@tcp(127.0.0.1:3307)/sakila?charset=utf8mb4&parseTime=True&loc=Local
+//     connMaxIdleTime: 10m # Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+//     connMaxLifetime: 20m
+//     maxIdleConns: 5
+//     maxOpenConns: 20
+//     logger:
+//       logMode: info
+//       ignoreErrRecordNotFound: true
+//       slowThresholdMS: 200
+
 var (
-	Client     *gorm.DB
+	clients    map[string]*gorm.DB
 	zerologger = log.With().Str("ltag", "gormStarter").Logger()
 )
 
@@ -27,14 +42,37 @@ func init() {
 		zerologger.Fatal().Err(err).Msg("load gorm config failed")
 		return
 	}
-	Client = newGormDB(cfg)
+	if len(cfg.Dbs) == 0 {
+		zerologger.Fatal().Msg("no data source config found")
+	}
+	clients = make(map[string]*gorm.DB)
+	for srcName, srcCfg := range cfg.Dbs {
+		clients[srcName] = newGormDB(srcCfg)
+	}
+}
+
+var (
+	ErrSourceNotFound = errors.New("source not found")
+)
+
+// 支持多个数据源配置，使用配置的数据源名字来获取数据源client，参数srcName大小写敏感
+func GetDbBySourceName(srcName string) (*gorm.DB, error) {
+	if src, ok := clients[srcName]; ok {
+		return src, nil
+	} else {
+		return nil, ErrSourceNotFound
+	}
 }
 
 type gormConfig struct {
+	Dbs map[string]*dataSourceConfig
+}
+
+type dataSourceConfig struct {
 	DBType          string                 `yaml:"dbType" json:"dbType"`
 	DSN             string                 `yaml:"dsn" json:"dsn"`
 	ConnMaxIdleTime string                 `yaml:"connMaxIdleTime" json:"connMaxIdleTime"`
-	ConnMaxLifetime string                 `yaml:"connMaxLifetime" json:"connMaxLifetime"`
+	ConnMaxLifetime string                 `yaml:"connMaxLifetime" json:"connMaxLifeTime"`
 	MaxIdleConns    *int                   `yaml:"maxIdleConns" json:"maxIdleConns"`
 	MaxOpenConns    *int                   `yaml:"maxOpenConns" json:"maxOpenConns"`
 	Logger          *mylogger.LoggerConfig `yaml:"logger" json:"logger"`
@@ -51,7 +89,7 @@ const (
 	dbTypeSqlServer = "sqlserver"
 )
 
-func newGormDB(cfg *gormConfig) *gorm.DB {
+func newGormDB(cfg *dataSourceConfig) *gorm.DB {
 	if cfg == nil {
 		log.Fatal().Msg("gorm config is nil")
 		return nil
