@@ -31,8 +31,8 @@ import (
 //       slowThresholdMS: 200
 
 var (
-	clients map[string]*gorm.DB
-	logger  = log.With().Str("ltag", "gormStarter").Logger()
+	dataSrcs map[string]*gorm.DB
+	logger   = log.With().Str("ltag", "gormStarter").Logger()
 )
 
 func init() {
@@ -45,9 +45,10 @@ func init() {
 	if len(cfg) == 0 {
 		logger.Fatal().Msg("no data source config found")
 	}
-	clients = make(map[string]*gorm.DB)
+	dataSrcs = make(map[string]*gorm.DB)
 	for srcName, srcCfg := range cfg {
-		clients[srcName] = newGormDB(srcCfg)
+		logger.Info().Str("srcName", srcName).Send()
+		dataSrcs[srcName] = newGormDB(srcName, srcCfg)
 	}
 }
 
@@ -57,7 +58,7 @@ var (
 
 // 支持多个数据源配置，使用配置的数据源名字来获取数据源client，参数srcName大小写敏感
 func GetDbBySourceName(srcName string) (*gorm.DB, error) {
-	if src, ok := clients[srcName]; ok {
+	if src, ok := dataSrcs[srcName]; ok {
 		return src, nil
 	} else {
 		return nil, ErrSourceNotFound
@@ -87,7 +88,7 @@ const (
 	dbTypeSqlServer = "sqlserver"
 )
 
-func newGormDB(cfg *dataSourceConfig) *gorm.DB {
+func newGormDB(srcName string, cfg *dataSourceConfig) *gorm.DB {
 	if cfg == nil {
 		log.Fatal().Msg("gorm config is nil")
 		return nil
@@ -95,7 +96,7 @@ func newGormDB(cfg *dataSourceConfig) *gorm.DB {
 	if len(cfg.DBType) == 0 {
 		cfg.DBType = dbTypeMysql
 	}
-	logger.Info().Msgf("trying to connect to %s server...", cfg.DBType)
+	logger.Info().Msgf("trying to connect to data source: %s...", srcName)
 	// 设置数据库类型
 	var dialector gorm.Dialector
 	switch strings.ToLower(cfg.DBType) {
@@ -151,6 +152,6 @@ func newGormDB(cfg *dataSourceConfig) *gorm.DB {
 	sqlDb.SetConnMaxLifetime(connMaxLifetime)
 	sqlDb.SetMaxOpenConns(maxOpenConns)
 	sqlDb.SetMaxIdleConns(maxIdleConns)
-	logger.Info().Msgf("successfully connect to %s server!", cfg.DBType)
+	logger.Info().Msgf("successfully connect to data source: %s!", srcName)
 	return db
 }
