@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"time"
@@ -41,9 +40,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 		_, skipped := skip[path]
 
-		c.Request = c.Request.WithContext(
-			context.WithValue(c.Request.Context(),
-				"requestId", requestId))
+		c.Set("request-id", requestId)
 
 		// Process request
 		c.Next()

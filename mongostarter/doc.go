@@ -1,5 +1,5 @@
-package mongostarter
-
 // 配置如下：
-// mongo:
-// 	 connectionString:
+//
+//	mongo:
+//	  connectionString:
+package mongostarter
