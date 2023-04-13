@@ -9,5 +9,5 @@
 //	    methods: ["*"]
 //	    headers: ["*"]
 //	  logger:
-//	    skipPaths: []
+//	    skipPaths: ["/metrics"]
 package ginstarter
