@@ -27,7 +27,7 @@ func newLocalConfigLoader(confProfile string) (configLoader, error) {
 	if len(confProfile) == 0 {
 		confProfile = ""
 	}
-	reg, _ := regexp.Compile(`\$\{\s*\w+\s*\}`)
+	reg, _ := regexp.Compile(`\$\{\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\}`)
 	return &localConfigLoader{
 		cfgFileDir:     "./resource/cfg/",
 		fileNamePrefix: "app",

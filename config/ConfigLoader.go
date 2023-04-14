@@ -19,10 +19,12 @@ func init() {
 	defaultLoader = cl
 }
 
+// 出现在配置文件中的配置项，应当实现此接口
 type Configurable interface {
 	GetConfigName() string
 }
 
+// 获取某项配置
 type configLoader interface {
 	GetConfig(inf Configurable) error
 }
@@ -37,12 +39,11 @@ func GetConfig(inf Configurable) error {
 }
 
 const (
-	// environment variable decide which profile to load
-	CONF_PROFILE = "CONF_PROFILE"
+	CONF_PROFILE = "CONF_PROFILE" // environment variable decide which profile to load
 )
 
 // create config loader instance according to some environment variables
 func newConfigLoader() (configLoader, error) {
-	deployEnv := strings.ToLower(os.Getenv(CONF_PROFILE))
+	deployEnv := strings.ToLower(strings.TrimSpace(os.Getenv(CONF_PROFILE)))
 	return newLocalConfigLoader(deployEnv)
 }

@@ -4,8 +4,8 @@
 //	 host: "localhost"
 //	 port: 8081
 //	 connTimeoutMS: 5000
-//	 writeBufferSize: 1024 * 1024 * 4
-//	 readBufferSize: 1024 * 1024 * 4
+//	 writeBufferSize: 4096 # bytes
+//	 readBufferSize: 4096 # bytes
 //	 interceptors:
 //	   - incoming
 //	   - outgoing
