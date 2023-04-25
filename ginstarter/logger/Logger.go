@@ -54,6 +54,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 				path = path + "?" + raw
 			}
 			e := logger.Log().
+				Str("stage", "incoming").
 				Str("peer", c.ClientIP()).
 				Str("method", c.Request.Method).
 				Str("path", path).
@@ -70,6 +71,7 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 				path = path + "?" + raw
 			}
 			e := logger.Log().
+				Str("stage", "outgoing").
 				Str("peer", c.ClientIP()).
 				Str("method", c.Request.Method).
 				Str("path", path).
