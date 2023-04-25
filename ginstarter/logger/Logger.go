@@ -13,6 +13,11 @@ var (
 	logger = log.With().Str("ltag", "ginLogger").Logger()
 )
 
+const (
+	RequestIdKey       = "request-id"
+	RequestIdHeaderKey = "x-request-id"
+)
+
 type LoggerConfig struct {
 	SkipPaths []string
 }
@@ -40,8 +45,22 @@ func LoggerWithConfig(conf LoggerConfig) gin.HandlerFunc {
 
 		_, skipped := skip[path]
 
-		c.Set("request-id", requestId)
-		c.Header("x-request-id", requestId)
+		c.Set(RequestIdKey, requestId)
+		c.Header(RequestIdHeaderKey, requestId)
+
+		// Log only if path is not being skipped
+		if !skipped {
+			if len(raw) != 0 {
+				path = path + "?" + raw
+			}
+			e := logger.Log().
+				Str("peer", c.ClientIP()).
+				Str("method", c.Request.Method).
+				Str("path", path).
+				Str("requestId", requestId)
+			e.Send()
+		}
+
 		// Process request
 		c.Next()
 

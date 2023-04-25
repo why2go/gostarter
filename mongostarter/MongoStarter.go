@@ -2,6 +2,8 @@ package mongostarter
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"time"
 
 	config "github.com/why2go/gostarter/config"
@@ -13,57 +15,76 @@ import (
 )
 
 var (
-	Client *mongoClient
-	logger = log.With().Str("ltag", "mongoStarter").Logger()
+	clients = make(map[string]*mongo.Client)
+	logger  = log.With().Str("ltag", "mongoStarter").Logger()
+)
+
+var (
+	ErrMongoClientNotFound = errors.New("mongo client not found")
 )
 
 func init() {
 	cfg := &mongoConf{}
 	err := config.GetConfig(cfg)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("get mongo config failed")
+		logger.Fatal().Err(err).Msg("load mongo config failed")
 		return
 	}
-	Client = newMongoClient(cfg)
+	for k, cc := range cfg.ClientsConfig {
+		c, err := newMongoClient(k, strings.TrimSpace(cc.ConnectionString))
+		if err != nil {
+			logger.Fatal().Err(err).Msgf("failed to connect to mongo: %s", k)
+			return
+		}
+		clients[strings.TrimSpace(k)] = c
+	}
 }
 
-type mongoClient = mongo.Client
+func GetMongoClient(which string) (*mongo.Client, error) {
+	if c, ok := clients[which]; ok {
+		return c, nil
+	}
+	return nil, ErrMongoClientNotFound
+}
 
-func newMongoClient(cfg *mongoConf) *mongoClient {
-	logger.Info().Msg("connecting to mongo server...")
-	opts := options.Client().ApplyURI(cfg.ConnectionString)
+func newMongoClient(clientName, connStr string) (*mongo.Client, error) {
+	logger.Info().Msgf("try to connect to mongo server: %s", clientName)
+	opts := options.Client().ApplyURI(connStr)
 	client, err := mongo.NewClient(opts)
 	if err != nil {
-		logger.Fatal().Err(err).Msg("new mongo client failed")
-		return nil
+		return nil, err
 	}
-	err = client.Connect(context.TODO())
-	if err != nil {
-		logger.Fatal().Err(err).Msg("can't connect to mongo server")
-		return nil
-	}
-	// 使用ping来测试连接是否成功
 	connTimeout := 2 * time.Second
 	if *opts.ConnectTimeout != 0 {
 		connTimeout = *opts.ConnectTimeout
 	}
+	ctx, cf := context.WithTimeout(context.Background(), connTimeout)
+	err = client.Connect(ctx)
+	cf()
+	if err != nil {
+		return nil, err
+	}
+	// 使用ping来测试连接是否成功
 	pingCtx, pingCf := context.WithTimeout(context.Background(), connTimeout)
 	defer pingCf()
 	err = client.Ping(pingCtx, readpref.Primary())
 	if err != nil {
-		logger.Fatal().Err(err).Msg("can't ping mongo server")
-		return nil
+		return nil, err
 	}
-	logger.Info().Msg("successfully connect to mongo server!")
+	logger.Info().Msgf("successfully connect to mongo server: %s", clientName)
 
-	return client
+	return client, nil
 }
 
 // 配置项
 type mongoConf struct {
-	ConnectionString string `yaml:"connectionString" json:"connectionString"`
+	ClientsConfig map[string]*clientConfig `yaml:"clients" json:"clients" toml:"clients"`
 }
 
 func (cfg *mongoConf) GetConfigName() string {
 	return "mongo"
+}
+
+type clientConfig struct {
+	ConnectionString string `yaml:"connectionString" json:"connectionString"`
 }

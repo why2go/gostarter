@@ -5,7 +5,7 @@ import (
 )
 
 func GetRequestIdFromGinContext(ctx *gin.Context) string {
-	v := ctx.Value("request_id")
+	v := ctx.Value("request-id")
 	if reqId, ok := v.(string); ok {
 		return reqId
 	} else {

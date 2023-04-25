@@ -1,6 +1,0 @@
-
-go_redis:
-  redis_local:
-    conn_url: "redis://<user>:<pass>@localhost:6379/<db>"
-  redis_another:
-    conn_url: "redis://<user>:<pass>@localhost:6379/<db>"
