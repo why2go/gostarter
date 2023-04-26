@@ -81,9 +81,7 @@ func (loader *localConfigLoader) loadConfig() error {
 			log.Trace().Err(err).Msgf("can't open config file: %s", filepath)
 		} else {
 			switch formats[i] {
-			case "yml":
-				fallthrough
-			case "yaml":
+			case "yml", "yaml":
 				parser = &yamlParser{}
 			case "json":
 				parser = &jsonParser{}
@@ -97,8 +95,11 @@ func (loader *localConfigLoader) loadConfig() error {
 	}
 	// replace all env vars expression with their values
 	replacedRawCfg := loader.envVarsRegex.ReplaceAllFunc(rawCfg, func(b []byte) []byte {
-		val := os.Getenv(string(bytes.TrimSpace(b[2 : len(b)-1])))
-		return []byte(val)
+		val, set := os.LookupEnv(string(bytes.TrimSpace(b[2 : len(b)-1])))
+		if !set {
+			log.Warn().Msgf("env variable \"%s\" not set", string(bytes.TrimSpace(b[2:len(b)-1])))
+		}
+		return bytes.TrimSpace([]byte(val))
 	})
 	rawCfgEntries := make(map[string]interface{})
 	err = parser.Unmarshal(replacedRawCfg, rawCfgEntries)

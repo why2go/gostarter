@@ -44,6 +44,10 @@ const (
 
 // create config loader instance according to some environment variables
 func newConfigLoader() (configLoader, error) {
-	deployEnv := strings.ToLower(strings.TrimSpace(os.Getenv(CONF_PROFILE)))
+	s, b := os.LookupEnv(CONF_PROFILE)
+	if !b {
+		log.Warn().Msgf("environment variable \"CONF_PROFILE\" not set, app.yaml will be used")
+	}
+	deployEnv := strings.ToLower(strings.TrimSpace(s))
 	return newLocalConfigLoader(deployEnv)
 }
