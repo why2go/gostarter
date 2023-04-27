@@ -30,7 +30,8 @@ type configLoader interface {
 }
 
 var (
-	ErrCfgItemNotFound = errors.New("config item not found")
+	ErrUnsupportedConfigSource = errors.New("config source is not supported")
+	ErrCfgItemNotFound         = errors.New("config item not found")
 )
 
 // get parsed config by name
@@ -39,15 +40,29 @@ func GetConfig(inf Configurable) error {
 }
 
 const (
-	CONF_PROFILE = "CONF_PROFILE" // environment variable decide which profile to load
+	// 配置文件来源，local表示使用本地配置，nacos表示使用Nacos远程配置，默认使用本地配置
+	CONFIG_SOURCE = "CONFIG_SOURCE"
+)
+
+const (
+	config_source_local = "local"
+	config_source_nacos = "nacos"
 )
 
 // create config loader instance according to some environment variables
 func newConfigLoader() (configLoader, error) {
-	s, b := os.LookupEnv(CONF_PROFILE)
-	if !b {
-		log.Warn().Msgf("environment variable \"CONF_PROFILE\" not set, app.yaml will be used")
+	configSource := config_source_local
+	configSourceVal, b := os.LookupEnv(CONFIG_SOURCE)
+	if b {
+		configSource = strings.ToLower(strings.TrimSpace(configSourceVal))
 	}
-	deployEnv := strings.ToLower(strings.TrimSpace(s))
-	return newLocalConfigLoader(deployEnv)
+
+	switch configSource {
+	case config_source_local:
+		return newLocalConfigLoader()
+	case config_source_nacos:
+		return newNacosConfigLoader()
+	default:
+		return nil, ErrUnsupportedConfigSource
+	}
 }

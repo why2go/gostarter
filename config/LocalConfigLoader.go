@@ -5,12 +5,20 @@ import (
 	"errors"
 	"os"
 	"regexp"
+	"strings"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 // load configs from "./resource/cfg/app-[confProfile].[yml|yaml|json]"
+
+const (
+	// 当使用本地配置时，CONF_PROFILE 用来确定使用哪个环境的配置文件，如dev, qa, test, prod等
+	// 寻找路径形式为："./resource/cfg/app-[${CONF_PROFILE}].[yml|yaml|json]"
+	// 如果没有设定 CONF_PROFILE，则默认使用 "./resource/cfg/app.[yml|yaml|json]"
+	CONF_PROFILE = "CONF_PROFILE"
+)
 
 type localConfigLoader struct {
 	cfgFileDir     string
@@ -23,10 +31,13 @@ type localConfigLoader struct {
 	envVarsRegex   *regexp.Regexp
 }
 
-func newLocalConfigLoader(confProfile string) (configLoader, error) {
-	if len(confProfile) == 0 {
-		confProfile = ""
+func newLocalConfigLoader() (configLoader, error) {
+	var confProfile string
+	s, b := os.LookupEnv(CONF_PROFILE)
+	if !b {
+		log.Warn().Msgf("environment variable \"CONF_PROFILE\" not set, app.yaml will be used")
 	}
+	confProfile = strings.ToLower(strings.TrimSpace(s))
 	reg, _ := regexp.Compile(`\$\{\s*[a-zA-Z_][a-zA-Z0-9_]*\s*\}`)
 	return &localConfigLoader{
 		cfgFileDir:     "./resource/cfg/",
