@@ -56,9 +56,8 @@ func newConfigLoader() (configLoader, error) {
 	if b {
 		configSource = strings.ToLower(strings.TrimSpace(configSourceVal))
 	}
-
 	switch configSource {
-	case config_source_local:
+	case "", config_source_local:
 		return newLocalConfigLoader()
 	case config_source_nacos:
 		return newNacosConfigLoader()
