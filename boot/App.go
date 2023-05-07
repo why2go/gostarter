@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"syscall"
 
-	config "github.com/why2go/gostarter/config"
+	"github.com/why2go/gostarter/boot/config"
 	_ "github.com/why2go/gostarter/zerologstarter"
 
 	"github.com/rs/zerolog"
@@ -17,12 +17,6 @@ import (
 
 // 规定应用的启动过程，包括配置加载，执行启动函数，执行清理函数
 
-const (
-	defaultAppName     = "github.com/why2go/gostarter"
-	defaultVersion     = "v0.0.1"
-	defaultDescription = "this is a demo app"
-)
-
 var (
 	logger      zerolog.Logger
 	appInstance *app
@@ -30,31 +24,12 @@ var (
 
 func init() {
 	logger = log.With().Str("ltag", "boot").Logger()
-	cfg := &appConf{}
-	err := config.GetConfig(cfg)
+	appConfig, err := config.GetAppConfig()
 	if err != nil {
-		if err == config.ErrCfgItemNotFound {
-			cfg.AppName = defaultAppName
-			cfg.Version = defaultVersion
-			cfg.Description = defaultDescription
-		} else {
-			logger.Fatal().Err(err).Msg("load app config failed")
-			return
-		}
+		logger.Fatal().Err(err).Msg("load app config failed")
+		return
 	}
-	appInstance = newApp(cfg)
-}
-
-type appConf struct {
-	AppName     string `yaml:"name" json:"name"`
-	Author      string `yaml:"author" json:"author"`
-	Version     string `yaml:"version" json:"version"`
-	ChangeLog   string `yaml:"changeLog" json:"changeLog"`
-	Description string `yaml:"description" json:"description"`
-}
-
-func (cfg *appConf) GetConfigName() string {
-	return "app"
+	appInstance = newApp(appConfig)
 }
 
 type app struct {
@@ -67,7 +42,7 @@ type app struct {
 	sweepers    []interface{}
 }
 
-func newApp(cfg *appConf) *app {
+func newApp(cfg *config.AppConf) *app {
 	app := &app{
 		name:        cfg.AppName,
 		author:      cfg.Author,

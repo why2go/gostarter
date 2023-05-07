@@ -1,0 +1,9 @@
+app:
+  app_name: demo
+  author: "ziyi"
+  version: "v0.0.1"
+
+server:
+  addresses:
+    - 127.0.0.1:8080
+    - 127.0.0.1:8081

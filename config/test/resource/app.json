@@ -1,0 +1,13 @@
+{
+    "app": {
+        "app_name": "demo app",
+        "author": "ziyi",
+        "version": "v0.0.2"
+    },
+    "server": {
+        "addresses": [
+            "10.0.0.1:8081",
+            "10.0.0.2:9090"
+        ]
+    }
+}
