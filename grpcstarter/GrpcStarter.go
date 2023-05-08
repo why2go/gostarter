@@ -20,7 +20,7 @@ var (
 func init() {
 	cfg := &grpcConf{}
 	err := config.GetConfig(cfg)
-	if err != nil && err != config.ErrCfgItemNotFound {
+	if err != nil && err != config.ErrNoConfigItemFound {
 		logger.Fatal().Err(err).Msg("load grpc server config failed")
 		return
 	}
@@ -41,7 +41,7 @@ type grpcConf struct {
 	Interceptors []string `yaml:"interceptors" json:"interceptors"` // incoming or outgoing
 }
 
-func (cfg *grpcConf) GetConfigName() string {
+func (cfg *grpcConf) ConfigName() string {
 	return "grpc"
 }
 

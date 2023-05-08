@@ -61,7 +61,7 @@ type dataSourceConfig struct {
 	Logger          *gormLogger.LoggerConfig `yaml:"logger" json:"logger"`
 }
 
-func (cfg *gormConfig) GetConfigName() string {
+func (cfg *gormConfig) ConfigName() string {
 	return "gorm"
 }
 

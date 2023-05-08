@@ -16,7 +16,7 @@ func init() {
 	cfg := &zerologConf{}
 	err = config.GetConfig(cfg)
 	if err != nil {
-		if err == config.ErrCfgItemNotFound {
+		if err == config.ErrNoConfigItemFound {
 			cfg.GlobalLevel = zerolog.LevelInfoValue
 		} else {
 			log.Fatal().Err(err).Msg("init zerolog failed")
@@ -65,6 +65,6 @@ type zerologConf struct {
 	*lumberjack.Logger `yaml:"rotationConfig" json:"rotationConfig"`
 }
 
-func (cfg *zerologConf) GetConfigName() string {
+func (cfg *zerologConf) ConfigName() string {
 	return "zerolog"
 }

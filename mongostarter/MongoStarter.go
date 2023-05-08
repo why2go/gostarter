@@ -81,7 +81,7 @@ type mongoConf struct {
 	ClientsConfig map[string]*clientConfig `yaml:"clients" json:"clients" toml:"clients"`
 }
 
-func (cfg *mongoConf) GetConfigName() string {
+func (cfg *mongoConf) ConfigName() string {
 	return "mongo"
 }
 

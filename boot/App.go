@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"syscall"
 
-	"github.com/why2go/gostarter/boot/config"
+	"github.com/why2go/gostarter/config"
 	_ "github.com/why2go/gostarter/zerologstarter"
 
 	"github.com/rs/zerolog"
@@ -24,12 +24,25 @@ var (
 
 func init() {
 	logger = log.With().Str("ltag", "boot").Logger()
-	appConfig, err := config.GetAppConfig()
+	appConfig := &appConf{}
+	err := config.GetConfig(appConfig)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("load app config failed")
 		return
 	}
 	appInstance = newApp(appConfig)
+}
+
+type appConf struct {
+	AppName     string `yaml:"name" json:"name"`
+	Author      string `yaml:"author" json:"author"`
+	Version     string `yaml:"version" json:"version"`
+	ChangeLog   string `yaml:"changeLog" json:"changeLog"`
+	Description string `yaml:"description" json:"description"`
+}
+
+func (appConf) ConfigName() string {
+	return "app"
 }
 
 type app struct {
@@ -42,7 +55,7 @@ type app struct {
 	sweepers    []interface{}
 }
 
-func newApp(cfg *config.AppConf) *app {
+func newApp(cfg *appConf) *app {
 	app := &app{
 		name:        cfg.AppName,
 		author:      cfg.Author,

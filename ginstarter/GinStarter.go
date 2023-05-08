@@ -61,7 +61,7 @@ type loggerConf struct {
 	SkipPaths []string `yaml:"skipPaths" json:"skipPaths"`
 }
 
-func (cfg *ginConf) GetConfigName() string {
+func (cfg *ginConf) ConfigName() string {
 	return "gin"
 }
 

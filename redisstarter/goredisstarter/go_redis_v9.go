@@ -29,7 +29,7 @@ type redisConfig struct {
 	ClusterClients map[string]*clusterClientConfig `yaml:"cluster_clients" json:"cluster_clients"`
 }
 
-func (redisConfig) GetConfigName() string {
+func (redisConfig) ConfigName() string {
 	return "go_redis"
 }
 

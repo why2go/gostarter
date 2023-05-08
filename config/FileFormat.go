@@ -27,14 +27,4 @@ var (
 		jsonFormat,
 		yamlFormat,
 	}
-
-	allTagPrefixes []string = allSupportedTagPrefixes()
 )
-
-func allSupportedTagPrefixes() []string {
-	var tagPrefixes []string
-	for _, ff := range allSupportedFileFormats {
-		tagPrefixes = append(tagPrefixes, ff.fieldTagPrefix)
-	}
-	return tagPrefixes
-}

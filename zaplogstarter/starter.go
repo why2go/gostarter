@@ -19,7 +19,7 @@ var (
 func init() {
 	cfg := &zapConfig{}
 	err := config.GetConfig(cfg)
-	if err != nil && err != config.ErrCfgItemNotFound {
+	if err != nil && err != config.ErrNoConfigItemFound {
 		log.Fatal("load zaplog config failed", err)
 		return
 	}
@@ -58,7 +58,7 @@ type zapConfig struct {
 	DurationUnit string `yaml:"durationUnit" json:"durationUnit"`
 }
 
-func (cfg *zapConfig) GetConfigName() string {
+func (cfg *zapConfig) ConfigName() string {
 	return "zaplog"
 }
 

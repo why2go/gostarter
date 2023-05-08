@@ -24,7 +24,7 @@ const (
 	CONFIG_PROFILE = "CONFIG_PROFILE"
 )
 
-type configLoader interface {
+type ConfigLoader interface {
 	load() ([]byte, *fileFormat, error)
 }
 
