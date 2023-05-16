@@ -140,8 +140,7 @@ func startup() {
 }
 
 func shutdown() {
-	// ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGSTOP, syscall.SIGINT, syscall.SIGTERM)
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGSTOP, syscall.SIGINT, syscall.SIGTERM)
 
 	<-ctx.Done()
 	stop()
