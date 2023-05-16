@@ -30,7 +30,7 @@ func init() {
 	}
 	zerolog.SetGlobalLevel(level)
 	zerolog.TimeFieldFormat = time.RFC3339Nano
-	zerolog.TimestampFunc = time.Now().UTC
+	zerolog.TimestampFunc = func() time.Time { return time.Now().UTC() }
 	zerolog.MessageFieldName = "msg"
 
 	switch strings.ToLower(cfg.DurationFieldUnit) {
