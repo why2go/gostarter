@@ -2,13 +2,13 @@
 //
 // 支持的配置文件格式为yaml和json，相应支持的文件后缀为yml，yaml，json。
 //
-// 配置文件的查找路径为当前工作目录下的：resource/cfg/。
+// 配置文件的查找路径为当前工作目录下的：resource/。
 //
 // 您可以为不同的开发环境配置不同的配置文件，配合环境变量 CONF_PROFILE 来指定特定场景使用的配置文件。
 //
-// 比如, CONF_PROFILE=prod, 则会使用 resource/cfg/app-prod.yaml 或者 resource/cfg/app-prod.json.
+// 比如, CONF_PROFILE=prod, 则会使用 resource/app-prod.yaml 或者 resource/app-prod.json.
 //
-// 如果没有指定 CONF_PROFILE 环境变量，则会使用 resource/cfg/app.yaml 或者 resource/cfg/app.json。
+// 如果没有指定 CONF_PROFILE 环境变量，则会使用 resource/app.yaml 或者 resource/app.json。
 //
 // 可以使用如下方式快速为您的应用增加一项配置，下面的示例展示了如何为
 //
@@ -36,7 +36,7 @@
 //	    // ...
 //	  }
 //
-// 此时您可以在 resource/cfg/app-prod.yaml 增加如下配置项：
+// 此时您可以在 resource/app-prod.yaml 增加如下配置项：
 //
 //	  httpServer:
 //	    host: localhost
