@@ -61,7 +61,7 @@ func init() {
 		sc := client.Ping(ctx)
 		cf()
 		if sc.Err() != nil {
-			logger.Fatal().Err(err).Msgf("failed to ping redis: %s", k)
+			logger.Fatal().Err(sc.Err()).Msgf("failed to ping redis: %s", k)
 			return
 		}
 		k = strings.TrimSpace(k)
@@ -80,7 +80,7 @@ func init() {
 		sc := cc.Ping(ctx)
 		cf()
 		if sc.Err() != nil {
-			logger.Fatal().Err(err).Msgf("failed to ping redis cluster: %s", k)
+			logger.Fatal().Err(sc.Err()).Msgf("failed to ping redis cluster: %s", k)
 			return
 		}
 		k = strings.TrimSpace(k)
