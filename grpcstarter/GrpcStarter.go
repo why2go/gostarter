@@ -89,6 +89,10 @@ func RegisterService(sd *grpc.ServiceDesc, ss interface{}) {
 	grpcSrvInstance.grpcServer.RegisterService(sd, ss)
 }
 
+func GetGrpcServer() *grpc.Server {
+	return grpcSrvInstance.grpcServer
+}
+
 func StartGrpcServer() {
 	addr := fmt.Sprintf("%s:%d", grpcSrvInstance.host, grpcSrvInstance.port)
 	lis, err := net.Listen("tcp", addr)
